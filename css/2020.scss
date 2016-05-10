@@ -1,0 +1,58 @@
+html, body, figure, figcaption, ul, li, h1 {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  font: inherit;
+  text-align: inherit;
+}
+
+ul {
+  list-style: none;
+}
+
+.group:after {
+  content: "";
+  clear: both;
+  display: block;
+}
+
+body {
+  font-family: sans-serif;
+  text-align: center;
+  font-weight: bold;
+}
+
+h1 {
+  font-size: 60px;
+  margin: 30px;
+}
+
+ul {
+  margin: 30px auto;
+  width: 270px;
+}
+
+li {
+  float: left;
+  width: 25px;
+  height: 25px;
+  margin: 0.5px;
+  border-radius: 5px;
+  background: lightgray;
+  cursor: pointer;
+}
+
+li:hover {
+  background: red;
+}
+
+.game-over li {
+  color: red;
+  cursor: default;
+  background: white;
+}
+
+
+figcaption {
+  font-size: 30px;
+}

@@ -1,4 +1,8 @@
+var View = require('./lib/view');
+var Game = require('./lib/game');
+
 document.addEventListener("DOMContentLoaded", function(event) {
-    document.write("DOM fully loaded and parsed");
-    console.log("Ready");
+  var rootEl = $('.2020');
+  var game = new Game();
+  window.view = new View(game, rootEl);
 });
