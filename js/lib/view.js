@@ -1,16 +1,12 @@
 var View = function (game, $el) {
-    this.game = game;
-    this.$el = $el;
+  this.game = game;
+  this.$el = $el;
 
-    this.setupBoard();
-    this.setupPieceTray();
-    this.bindEvents();
-  };
-
-View.prototype.bindEvents = function () {
-  // install a handler on the `li` elements inside the board.
-  this.$el.on("click", "li", (function (event) {
-    console.log($(event.currentTarget).data('pos'));
+  this.setupBoard();
+  this.setupPieceTray();
+  this.$el.on("click", "li", (function (e) {
+    console.log($(e.currentTarget).data('pos'));
+    console.log($(e.currentTarget).data('color'));
   }).bind(this));
 };
 
@@ -24,29 +20,20 @@ View.prototype.makeMove = function ($square) {
     alert("Invalid move! Try again.");
     return;
   }
+};
 
-  $square.addClass(currentPlayer);
-
-  if (this.game.isOver()) {
-    // cleanup click handlers.
-    this.$el.off("click");
-    this.$el.addClass("game-over");
-
-    var winner = this.game.winner();
-    var $figcaption = $("<figcaption>");
-
-    if (winner) {
-      this.$el.addClass("winner-" + winner);
-      $figcaption.html("You win, " + winner + "!");
-    } else {
-      $figcaption.html("It's a draw!");
-    }
-
-    this.$el.append($figcaption);
-  }
+View.prototype.validMove = function (startPos) {
+  var shape = this.game.tray.shape;
+  var coords = shape.coords;
+  console.log(coords);
+  var transformedCoords = coords.map(function (pos) {
+    return [startPos[0]+pos[0], startPos[1]+pos[1]];
+  });
+  console.log(transformedCoords);
 };
 
 View.prototype.setupBoard = function () {
+  var self = this;
   var $ul = $("<ul>");
   $ul.addClass("group");
 
@@ -55,11 +42,20 @@ View.prototype.setupBoard = function () {
       var $li = $("<li>");
       $li.data("pos", [rowIdx, colIdx]);
       $li.droppable({
-        drop: function(event, ui) {
-          console.log($(this).data('pos'))
-          $(this).addClass('piece');
+        tolerance: 'pointer',
+        drop: function (e, ui) {
+          debugger;
+          if (self.validMove($(this).data('pos'))) {
+
+
+          } else {
+
+          }
+
           $(this).css("background", $(ui.draggable[0]).data('color'));
-        }
+          self.game.playMove();
+          self.setupPieceTray();
+        },
       });
       $ul.append($li);
     }
@@ -69,26 +65,47 @@ View.prototype.setupBoard = function () {
 };
 
 View.prototype.setupPieceTray = function () {
+  $('.tray').remove();
+  var tray = this.game.tray;
   var $ul = $("<ul>");
-  $ul.addClass("group");
+  $ul.addClass("tray");
 
-  for (var rowIdx = 0; rowIdx < 3; rowIdx++) {
-    for (var colIdx = 0; colIdx < 10; colIdx++) {
+  tray.grid.forEach(function (row, rowIdx) {
+    row.forEach(function (col, colIdx) {
       var $li = $("<li>");
-      $li.data("pos", [rowIdx, colIdx]);
-      if (rowIdx === 0) {
-        $li.data('color', 'blue');
-        $li.draggable({
-          stop: function (event, ui) {
-            $(this).remove();
-          }
-        });
+      if (col !== null) {
+        $li.data("color", col);
+        $li.addClass("piece");
+        $li.css('background', col);
       }
+
+      $li.data("pos", [rowIdx, colIdx]);
       $ul.append($li);
-    }
-  }
+    });
+  });
 
   this.$el.append($ul);
+  this.addDraggableListener();
+};
+
+View.prototype.addDraggableListener = function () {
+  $('.tray > li.piece').draggable({
+    cursor: 'pointer',
+    revert: false,
+    helper: function(e) {
+      var helperList = $('<ul class="draggable-helper">');
+      helperList.append($('.tray > li').clone());
+      return helperList;
+    },
+    drag: function (e, ui) {
+      $('.tray > li.piece').css('visibility', 'hidden');
+    },
+
+    stop: function(e, ui) {
+      $('.tray > li.piece').css('visibility', 'visible');
+		},
+    cursorAt: { top: 40 }
+  });
 };
 
 module.exports = View;
