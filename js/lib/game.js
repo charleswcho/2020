@@ -12,6 +12,7 @@ Game.prototype.isOver = function () {
 };
 
 Game.prototype.playMove = function () {
+  this.board.placeShape(this.tray.shape); 
   this.tray = new Tray();
 };
 

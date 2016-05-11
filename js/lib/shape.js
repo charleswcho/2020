@@ -7,7 +7,7 @@ var SHAPES = ['dot', 'sSquare', 'lSquare',
   'vertical2', 'vertical3', 'vertical4', 'vertical5'
 ];
 
-var COLORS = ['green', 'lightblue', 'blue', 'purple', 'red', 'yellow', 'lightgreen'];
+var COLORS = ['green', 'coral', 'cornflowerblue', 'lightblue', 'blue', 'purple', 'red', 'yellow', 'lightgreen'];
 
 function Shape () {
 	this.type = SHAPES.random();

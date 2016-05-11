@@ -62,7 +62,6 @@
 	  this.game = game;
 	  this.$el = $el;
 	  this.valid = true;
-	
 	  this.setupBoard();
 	  this.setupPieceTray();
 	  this.$el.on("click", "li", (function (e) {
@@ -71,16 +70,8 @@
 	  }).bind(this));
 	};
 	
-	View.prototype.makeMove = function ($square) {
-	  var pos = $square.data("pos");
-	  var currentPlayer = this.game.currentPlayer;
-	
-	  try {
-	    this.game.playMove(pos);
-	  } catch (e) {
-	    alert("Invalid move! Try again.");
-	    return;
-	  }
+	View.prototype.placeShape = function (listItem) {
+	  this.game.playMove();
 	};
 	
 	View.prototype.transformCoords = function (startPos, coords) {
@@ -89,69 +80,81 @@
 	  });
 	};
 	
+	View.prototype.renderFullShape = function (color) {
+	  this.listItems.forEach(function ($li) {
+	    $li.css('background', color);
+	    $li.data('color', color);
+	    $li.addClass('piece')
+	  });
+	};
+	
 	View.prototype.validMove = function (startPos) {
+	  var self = this;
 	  var coords = this.game.tray.shape.coords;
 	  this.transformCoords(startPos, coords);
 	  this.transformedCoords.forEach(function (pos) {
-	    $('.group > li.piece').each(function (idx, li) {
+	    $('.group > li').each(function (idx, li) {
 	      var $li = $(li);
-	      if (($li.data('pos').equals(pos)) && ($li.data('color') !== null)) {
-	        this.valid = false;
+	      if (($li.data('pos').equals(pos)) && ($li.data('color') !== undefined)) {
+	        self.valid = false;
+	      } else if ($li.data('pos').equals(pos)) {
+	        self.listItems.push($li);
 	      }
 	    });
 	  });
+	
 	};
 	
 	View.prototype.setupBoard = function () {
 	  var self = this;
-	  var $ul = $("<ul>");
-	  $ul.addClass("group");
+	  var board = this.game.board;
+	  var $ul = $("<ul>").addClass("group");
 	
-	  for (var rowIdx = 0; rowIdx < 10; rowIdx++) {
-	    for (var colIdx = 0; colIdx < 10; colIdx++) {
+	  board.grid.forEach(function (row, rowIdx) {
+	    row.forEach(function (tile, tileIdx) {
 	      var $li = $("<li>");
-	      $li.data("pos", [rowIdx, colIdx]);
+	      $li.data("pos", [rowIdx, tileIdx]);
 	      $li.droppable({
 	        tolerance: 'pointer',
 	        drop: function (e, ui) {
-	          this.valid = self.validMove($(this).data('pos'));
-	
-	          if (this.validMove) {
-	            $(this).css('background', $(ui.draggable[0]).data('color'));
-	            $(this).data('color', $(ui.draggable[0]).data('color'));
-	            $(this).addClass('piece')
+	          self.valid = true;
+	          self.listItems = [];
+	          self.validMove($(this).data('pos'));
+	          if (self.valid) {
+	            self.renderFullShape($(ui.draggable[0]).data('color'));
 	            self.game.playMove();
 	            self.setupPieceTray();
-	          } else {
-	
 	          }
-	
-	
 	        },
 	      });
 	      $ul.append($li);
-	    }
-	  }
+	    });
+	  });
 	
 	  this.$el.append($ul);
 	};
 	
+	View.prototype.drop = function (e, ui) {
+	
+	};
+	
 	View.prototype.setupPieceTray = function () {
+	  var self = this;
 	  $('.tray').remove();
 	  var tray = this.game.tray;
 	  var $ul = $("<ul>");
 	  $ul.addClass("tray");
 	
 	  tray.grid.forEach(function (row, rowIdx) {
-	    row.forEach(function (col, colIdx) {
+	    row.forEach(function (tile, tileIdx) {
 	      var $li = $("<li>");
-	      if (col !== null) {
-	        $li.data("color", col);
+	      if (!tile.empty) {
+	        $li.data("color", tile.color);
+	        $li.css('background', tile.color);
 	        $li.addClass("piece");
-	        $li.css('background', col);
 	      }
 	
-	      $li.data("pos", [rowIdx, colIdx]);
+	      $li.data("pos", [rowIdx, tileIdx]);
 	      $ul.append($li);
 	    });
 	  });
@@ -222,6 +225,7 @@
 	};
 	
 	Game.prototype.playMove = function () {
+	  this.board.placeShape(this.tray.shape); 
 	  this.tray = new Tray();
 	};
 	
@@ -238,50 +242,57 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var MoveError = __webpack_require__(4);
+	var Tile = __webpack_require__(7);
+	var NullTile = __webpack_require__(8);
 	
 	function Board () {
 	  this.grid = Board.makeGrid();
 	}
 	
-	Board.isValidPos = function (pos) {
+	Board.makeGrid = function () {
+	  var grid = [];
+	  for (var i = 0; i < 10; i++) {
+	    grid.push([]);
+	    for (var j = 0; j < 10; j++) {
+	      grid[i].push(new NullTile([i,j], null));
+	    }
+	  }
+	  return grid;
+	};
+	
+	Board.validPos = function (pos) {
 	  return (
 	    (0 <= pos[0]) && (pos[0] < 10) && (0 <= pos[1]) && (pos[1] < 10)
 	  );
 	};
 	
-	Board.makeGrid = function () {
-	  var grid = [];
-	
-	  for (var i = 0; i < 10; i++) {
-	    grid.push([]);
-	    for (var j = 0; j < 10; j++) {
-	      grid[i].push(null);
-	    }
+	Board.prototype.placeShape = function (shape) {
+	  var coords = shape.coords;
+	  if (this.emptyCoords(coords)) {
+	    coords.forEach(function (row, rowIdx) {
+	      row.forEach(function (tile, tileIdx) {
+	        tile = new Tile([rowIdx, tileIdx], shape.color);
+	      });
+	    });
 	  }
-	
-	  return grid;
 	};
 	
-	
-	Board.prototype.placeMark = function (pos, mark) {
-	  if (!this.isEmptyPos(pos)) {
-	    throw new MoveError("Is not an empty position!");
-	  }
-	
-	  this.grid[pos[0]][pos[1]] = mark;
-	};
-	
-	
-	Board.prototype.isEmptyPos = function (pos) {
-	  if (!Board.isValidPos(pos)) {
-	    throw new MoveError("Is not valid position!");
-	  }
-	
-	  return (this.grid[pos[0]][pos[1]] === null);
+	Board.prototype.emptyCoords = function (coords) {
+	  var self = this;
+	  coords.forEach(function (row, rowIdx) {
+	    row.forEach(function (tile, tileIdx) {
+	      if (Board.validPos([rowIdx, tileIdx])) {
+	        var tile = self.grid[rowIdx][tileIdx];
+	        if (tile.empty) {
+	          return false;
+	        }
+	      }
+	    });
+	  });
+	  return true;
 	};
 	
 	Board.prototype.isOver = function () {
-	
 	  for (var rowIdx = 0; rowIdx < 3; rowIdx++) {
 	    for (var colIdx = 0; colIdx < 3; colIdx++) {
 	      if (this.isEmptyPos([rowIdx, colIdx])) {
@@ -289,10 +300,8 @@
 	      }
 	    }
 	  }
-	
 	  return true;
 	};
-	
 	
 	module.exports = Board;
 
@@ -313,11 +322,13 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var Shape = __webpack_require__(6);
+	var Tile = __webpack_require__(7);
+	var NullTile = __webpack_require__(8);
 	
 	function Tray () {
 	  this.grid = Tray.makeGrid();
 	  this.shape = new Shape();
-	  this.placePiece(this.shape);
+	  this.placeShape(this.shape);
 	}
 	
 	Tray.makeGrid = function () {
@@ -325,15 +336,15 @@
 	  for (var i = 0; i < 5; i++) {
 	    grid.push([]);
 	    for (var j = 0; j < 5; j++) {
-	      grid[i].push(null);
+	      grid[i].push(new NullTile([i,j], null));
 	    }
 	  }
 	  return grid;
 	};
 	
-	Tray.prototype.placePiece = function (shape) {
+	Tray.prototype.placeShape = function (shape) {
 	  shape.coords.forEach(function (pos) {
-	    this.grid[pos[0]][pos[1]] = shape.color;
+	    this.grid[pos[0]][pos[1]] = new Tile(pos, shape.color);
 	  }.bind(this));
 	};
 	
@@ -353,7 +364,7 @@
 	  'vertical2', 'vertical3', 'vertical4', 'vertical5'
 	];
 	
-	var COLORS = ['green', 'lightblue', 'blue', 'purple', 'red', 'yellow', 'lightgreen'];
+	var COLORS = ['green', 'coral', 'cornflowerblue', 'lightblue', 'blue', 'purple', 'red', 'yellow', 'lightgreen'];
 	
 	function Shape () {
 		this.type = SHAPES.random();
@@ -400,6 +411,32 @@
 	};
 	
 	module.exports = Shape;
+
+
+/***/ },
+/* 7 */
+/***/ function(module, exports) {
+
+	function Tile (pos, color) {
+	  this.pos = pos;
+	  this.color = color;
+	  this.empty = false;
+	};
+	
+	module.exports = Tile;
+
+
+/***/ },
+/* 8 */
+/***/ function(module, exports) {
+
+	function NullTile (pos, color) {
+	  this.pos = pos;
+	  this.color = color;
+	  this.empty = true;
+	};
+	
+	module.exports = NullTile;
 
 
 /***/ }
