@@ -5,6 +5,7 @@ var MoveError = require("./moveError");
 function Game () {
   this.board = new Board();
   this.tray = new Tray();
+  this.score = 0;
 }
 
 Game.prototype.isOver = function () {
@@ -12,7 +13,7 @@ Game.prototype.isOver = function () {
 };
 
 Game.prototype.playMove = function () {
-  this.board.placeShape(this.tray.shape); 
+  // this.board.placeShape(this.tray.shape);
   this.tray = new Tray();
 };
 

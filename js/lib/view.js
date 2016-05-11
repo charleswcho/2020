@@ -1,17 +1,50 @@
 var View = function (game, $el) {
   this.game = game;
+  this.board = game.board;
   this.$el = $el;
   this.valid = true;
+  this.grid = [];
   this.setupBoard();
   this.setupPieceTray();
-  this.$el.on("click", "li", (function (e) {
-    console.log($(e.currentTarget).data('pos'));
-    console.log($(e.currentTarget).data('color'));
-  }).bind(this));
+};
+
+View.prototype.setupBoard = function () {
+  var self = this;
+  var $ul = $("<ul>").addClass("group");
+
+  this.board.grid.forEach(function (row, rowIdx) {
+    row.forEach(function (tile, tileIdx) {
+      var $li = $("<li>");
+      $li.data("pos", [rowIdx, tileIdx]);
+      self.addDroppableListener($li);
+      $ul.append($li);
+    });
+  });
+
+  this.$el.append($ul);
+};
+
+View.prototype.addDroppableListener = function ($li) {
+  var self = this;
+  $li.droppable({
+    tolerance: 'pointer',
+    drop: function (e, ui) {
+      self.valid = true;
+      self.listItems = [];
+      self.validMove($(this).data('pos'));
+      if (self.valid) {
+        self.renderFullShape($(ui.draggable[0]).data('color'));
+        self.placeShape();
+      }
+    },
+  });
 };
 
 View.prototype.placeShape = function (listItem) {
   this.game.playMove();
+  this.setupPieceTray();
+  this.game.score += 100
+  $('.score').html('<p>Score: ' + this.game.score + '</p>');
 };
 
 View.prototype.transformCoords = function (startPos, coords) {
@@ -26,6 +59,8 @@ View.prototype.renderFullShape = function (color) {
     $li.data('color', color);
     $li.addClass('piece')
   });
+  this.horizontals();
+  this.verticals();
 };
 
 View.prototype.validMove = function (startPos) {
@@ -42,40 +77,64 @@ View.prototype.validMove = function (startPos) {
       }
     });
   });
-
 };
 
-View.prototype.setupBoard = function () {
+View.prototype.verticals = function () {
   var self = this;
-  var board = this.game.board;
-  var $ul = $("<ul>").addClass("group");
-
-  board.grid.forEach(function (row, rowIdx) {
-    row.forEach(function (tile, tileIdx) {
-      var $li = $("<li>");
-      $li.data("pos", [rowIdx, tileIdx]);
-      $li.droppable({
-        tolerance: 'pointer',
-        drop: function (e, ui) {
-          self.valid = true;
-          self.listItems = [];
-          self.validMove($(this).data('pos'));
-          if (self.valid) {
-            self.renderFullShape($(ui.draggable[0]).data('color'));
-            self.game.playMove();
-            self.setupPieceTray();
-          }
-        },
-      });
-      $ul.append($li);
+  var grid = this.grid;
+  var cols = grid[0].map(function(col, i) {
+    return grid.map(function(row) {
+        return row[i];
     });
   });
-
-  this.$el.append($ul);
+  cols.forEach(function (row) {
+    if (self.full(row)) {
+      self.clear(row);
+    }
+  });
 };
 
-View.prototype.drop = function (e, ui) {
+View.prototype.horizontals = function () {
+  this.grid = [];
+  var self = this;
+  var row = [];
+  $('.group > li').each(function (idx, li) {
+    var $li = $(li);
+    row.push($li[0]);
+    if (row.length === 10) {
+      if (self.full(row)) {
+        self.clear(row);
+      }
+      self.grid.push(row);
+      row = [];
+    }
+  });
+};
 
+View.prototype.full = function (arr) {
+  var full = true;
+  arr.forEach(function (li) {
+    var $li = $(li);
+    if ($li.data('color') === undefined) {
+      full = false;
+    }
+  });
+  return full;
+};
+
+View.prototype.clear = function (arr) {
+  this.game.score += 1000
+  var self = this;
+  arr.forEach(function (li) {
+    var $li = $(li);
+    $li.animate({ 'background-color': '#ccc' }, 500, function() {
+      $li.removeAttr('style');
+      $li.removeData('color');
+      $li.removeClass('piece');
+		});
+  });
+
+  return true;
 };
 
 View.prototype.setupPieceTray = function () {
