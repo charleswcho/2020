@@ -1,6 +1,7 @@
 var View = function (game, $el) {
   this.game = game;
   this.$el = $el;
+  this.valid = true;
 
   this.setupBoard();
   this.setupPieceTray();
@@ -22,14 +23,23 @@ View.prototype.makeMove = function ($square) {
   }
 };
 
-View.prototype.validMove = function (startPos) {
-  var shape = this.game.tray.shape;
-  var coords = shape.coords;
-  console.log(coords);
-  var transformedCoords = coords.map(function (pos) {
+View.prototype.transformCoords = function (startPos, coords) {
+  this.transformedCoords = coords.map(function (pos) {
     return [startPos[0]+pos[0], startPos[1]+pos[1]];
   });
-  console.log(transformedCoords);
+};
+
+View.prototype.validMove = function (startPos) {
+  var coords = this.game.tray.shape.coords;
+  this.transformCoords(startPos, coords);
+  this.transformedCoords.forEach(function (pos) {
+    $('.group > li.piece').each(function (idx, li) {
+      var $li = $(li);
+      if (($li.data('pos').equals(pos)) && ($li.data('color') !== null)) {
+        this.valid = false;
+      }
+    });
+  });
 };
 
 View.prototype.setupBoard = function () {
@@ -44,17 +54,19 @@ View.prototype.setupBoard = function () {
       $li.droppable({
         tolerance: 'pointer',
         drop: function (e, ui) {
-          debugger;
-          if (self.validMove($(this).data('pos'))) {
+          this.valid = self.validMove($(this).data('pos'));
 
-
+          if (this.validMove) {
+            $(this).css('background', $(ui.draggable[0]).data('color'));
+            $(this).data('color', $(ui.draggable[0]).data('color'));
+            $(this).addClass('piece')
+            self.game.playMove();
+            self.setupPieceTray();
           } else {
 
           }
 
-          $(this).css("background", $(ui.draggable[0]).data('color'));
-          self.game.playMove();
-          self.setupPieceTray();
+
         },
       });
       $ul.append($li);
@@ -102,10 +114,31 @@ View.prototype.addDraggableListener = function () {
     },
 
     stop: function(e, ui) {
-      $('.tray > li.piece').css('visibility', 'visible');
+      if (!this.validMove) {
+        $('.tray > li.piece').css('visibility', 'visible');
+      }
 		},
     cursorAt: { top: 40 }
   });
 };
+
+if(Array.prototype.equals)
+    console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
+Array.prototype.equals = function (array) {
+    if (!array)
+        return false;
+    if (this.length != array.length)
+        return false;
+    for (var i = 0, l=this.length; i < l; i++) {
+        if (this[i] instanceof Array && array[i] instanceof Array) {
+            if (!this[i].equals(array[i]))
+                return false;
+        }
+        else if (this[i] != array[i]) {
+            return false;
+        }
+    }
+    return true;
+}
 
 module.exports = View;
