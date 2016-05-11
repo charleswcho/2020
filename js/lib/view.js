@@ -43,7 +43,7 @@ View.prototype.addDroppableListener = function ($li) {
 View.prototype.placeShape = function (listItem) {
   this.game.playMove();
   this.setupPieceTray();
-  this.game.score += 100
+  this.game.score += 7
   $('.score').html('<p>Score: ' + this.game.score + '</p>');
 };
 
@@ -123,7 +123,7 @@ View.prototype.full = function (arr) {
 };
 
 View.prototype.clear = function (arr) {
-  this.game.score += 1000
+  this.game.score += 93
   var self = this;
   arr.forEach(function (li) {
     var $li = $(li);
