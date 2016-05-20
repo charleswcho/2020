@@ -11,7 +11,8 @@ This project was inspired by 1010!. This version of 1010! was created using Java
 
 ### Graphics
 
-
+* jQuery UI Draggable utilizes the helper option to select multiple HTML elements to drag
+* jQuery UI Droppables drop callback checks for if move is valid then “places” the piece by changing the color of all the droppable elements under the piece
 
 
 ## Future Directions
