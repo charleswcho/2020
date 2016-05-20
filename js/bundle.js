@@ -244,23 +244,21 @@
 	  });
 	};
 	
-	if(Array.prototype.equals)
-	    console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
 	Array.prototype.equals = function (array) {
-	    if (!array)
-	        return false;
-	    if (this.length != array.length)
-	        return false;
-	    for (var i = 0, l=this.length; i < l; i++) {
-	        if (this[i] instanceof Array && array[i] instanceof Array) {
-	            if (!this[i].equals(array[i]))
-	                return false;
-	        }
-	        else if (this[i] != array[i]) {
-	            return false;
-	        }
-	    }
-	    return true;
+	  if (!array)
+	      return false;
+	  if (this.length != array.length)
+	      return false;
+	  for (var i = 0, l=this.length; i < l; i++) {
+	      if (this[i] instanceof Array && array[i] instanceof Array) {
+	          if (!this[i].equals(array[i]))
+	              return false;
+	      }
+	      else if (this[i] != array[i]) {
+	          return false;
+	      }
+	  }
+	  return true;
 	}
 	
 	module.exports = View;
@@ -271,7 +269,7 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var Board = __webpack_require__(3);
-	var Tray = __webpack_require__(5);
+	var Tray = __webpack_require__(7);
 	var MoveError = __webpack_require__(4);
 	
 	function Game () {
@@ -302,8 +300,8 @@
 /***/ function(module, exports, __webpack_require__) {
 
 	var MoveError = __webpack_require__(4);
-	var Tile = __webpack_require__(7);
-	var NullTile = __webpack_require__(8);
+	var Tile = __webpack_require__(5);
+	var NullTile = __webpack_require__(6);
 	
 	function Board () {
 	  this.grid = Board.makeGrid();
@@ -379,11 +377,37 @@
 
 /***/ },
 /* 5 */
+/***/ function(module, exports) {
+
+	function Tile (pos, color) {
+	  this.pos = pos;
+	  this.color = color;
+	  this.empty = false;
+	};
+	
+	module.exports = Tile;
+
+
+/***/ },
+/* 6 */
+/***/ function(module, exports) {
+
+	function NullTile (pos, color) {
+	  this.pos = pos;
+	  this.color = color;
+	  this.empty = true;
+	};
+	
+	module.exports = NullTile;
+
+
+/***/ },
+/* 7 */
 /***/ function(module, exports, __webpack_require__) {
 
-	var Shape = __webpack_require__(6);
-	var Tile = __webpack_require__(7);
-	var NullTile = __webpack_require__(8);
+	var Shape = __webpack_require__(8);
+	var Tile = __webpack_require__(5);
+	var NullTile = __webpack_require__(6);
 	
 	function Tray () {
 	  this.grid = Tray.makeGrid();
@@ -412,19 +436,18 @@
 
 
 /***/ },
-/* 6 */
+/* 8 */
 /***/ function(module, exports) {
 
 	Array.prototype.random = function () {
 	  return this[Math.floor(Math.random() * this.length)];
 	}
 	
-	var SHAPES = ['dot', 'sSquare', 'lSquare',
-	  'horizontal2', 'horizontal3', 'horizontal4', 'horizontal5',
+	var SHAPES = ['dot', 'sSquare', 'lSquare','lelbow3', 'lelbow5', 'relbow3', 'relbow5','horizontal2', 'horizontal3', 'horizontal4', 'horizontal5',
 	  'vertical2', 'vertical3', 'vertical4', 'vertical5'
 	];
 	
-	var COLORS = ['green', 'coral', 'cornflowerblue', 'lightblue', 'blue', 'purple', 'red', 'gold', 'lightgreen'];
+	var COLORS = ['#FFB5E8', '#FF9CEE', '#F6A6FF', '#B28DFF', '#C5A3FF', '#D5AAFF', '#B5B9FF', '#AFCBFF', '#AFF8DB', '#85E3FF', '#ACE7FF', '#6EB5FF', '#BFFCC6', '#E7FFAC', '#FFC9DE', '#FFBEBC', '#FFABAB', '#FFF5BA'];
 	
 	function Shape () {
 		this.type = SHAPES.random();
@@ -442,6 +465,18 @@
 	      break;
 	    case 'lSquare':
 	      this.coords = [[0,0], [1,0], [2,0], [0,1], [1,1], [2,1], [0,2], [1,2], [2,2]];
+	      break;
+	    case 'lelbow3':
+	      this.coords = [[0,0], [1,0], [1,1]];
+	      break;
+	    case 'lelbow5':
+	      this.coords = [[0,0], [1,0], [2,0], [2,1], [2,2]];
+	      break;
+	    case 'relbow3':
+	      this.coords = [[0,0], [0,1], [1,1]];
+	      break;
+	    case 'relbow5':
+	      this.coords = [[0,0], [0,1], [0,2], [1,2], [2,2]];
 	      break;
 	    case 'horizontal2':
 	      this.coords = [[0,0], [1,0]];
@@ -471,32 +506,6 @@
 	};
 	
 	module.exports = Shape;
-
-
-/***/ },
-/* 7 */
-/***/ function(module, exports) {
-
-	function Tile (pos, color) {
-	  this.pos = pos;
-	  this.color = color;
-	  this.empty = false;
-	};
-	
-	module.exports = Tile;
-
-
-/***/ },
-/* 8 */
-/***/ function(module, exports) {
-
-	function NullTile (pos, color) {
-	  this.pos = pos;
-	  this.color = color;
-	  this.empty = true;
-	};
-	
-	module.exports = NullTile;
 
 
 /***/ }
