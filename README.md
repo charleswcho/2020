@@ -2,6 +2,10 @@
 [Play][link]
 [link]: charleswcho.github.io/2020/
 
+![game][game]
+
+[game]: docs/screenshot.png
+
 ## Overview
 
 This project was inspired by 1010!. 2020 was created using JavaScript and jQuery.
