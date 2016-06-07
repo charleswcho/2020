@@ -12,14 +12,13 @@ Game.prototype.isOver = function () {
   return this.board.isOver();
 };
 
-Game.prototype.playMove = function () {
-  // this.board.placeShape(this.tray.shape);
+Game.prototype.playMove = function (pos) {
+  this.board.placeShape(pos, this.tray.shape);
   this.tray = new Tray();
 };
 
 Game.prototype.run = function (gameCompletionCallback) {
 
 };
-
 
 module.exports = Game;

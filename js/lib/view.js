@@ -2,7 +2,6 @@ var View = function (game, $el) {
   this.game = game;
   this.board = game.board;
   this.$el = $el;
-  this.valid = true;
   this.grid = [];
   this.setupBoard();
   this.setupPieceTray();
@@ -10,11 +9,17 @@ var View = function (game, $el) {
 
 View.prototype.setupBoard = function () {
   var self = this;
+  $('.group').remove();
   var $ul = $("<ul>").addClass("group");
 
   this.board.grid.forEach(function (row, rowIdx) {
     row.forEach(function (tile, tileIdx) {
       var $li = $("<li>");
+      if (!tile.empty) {
+        $li.css('background', tile.color);
+        $li.data('color', tile.color);
+        $li.addClass('piece')
+      }
       $li.data("pos", [rowIdx, tileIdx]);
       self.addDroppableListener($li);
       $ul.append($li);
@@ -29,54 +34,19 @@ View.prototype.addDroppableListener = function ($li) {
   $li.droppable({
     tolerance: 'pointer',
     drop: function (e, ui) {
-      self.valid = true;
-      self.listItems = [];
-      self.validMove($(this).data('pos'));
-      if (self.valid) {
-        self.renderFullShape($(ui.draggable[0]).data('color'));
-        self.placeShape();
-      }
+      self.placeShape($(this).data('pos'))
     },
   });
 };
 
-View.prototype.placeShape = function (listItem) {
-  this.game.playMove();
+View.prototype.placeShape = function (startPos) {
+  this.game.playMove(startPos);
+  this.setupBoard();
   this.setupPieceTray();
-  this.game.score += 7
-  $('.score').html('<p>Score: ' + this.game.score + '</p>');
-};
-
-View.prototype.transformCoords = function (startPos, coords) {
-  this.transformedCoords = coords.map(function (pos) {
-    return [startPos[0]+pos[0], startPos[1]+pos[1]];
-  });
-};
-
-View.prototype.renderFullShape = function (color) {
-  this.listItems.forEach(function ($li) {
-    $li.css('background', color);
-    $li.data('color', color);
-    $li.addClass('piece')
-  });
   this.horizontals();
   this.verticals();
-};
-
-View.prototype.validMove = function (startPos) {
-  var self = this;
-  var coords = this.game.tray.shape.coords;
-  this.transformCoords(startPos, coords);
-  this.transformedCoords.forEach(function (pos) {
-    $('.group > li').each(function (idx, li) {
-      var $li = $(li);
-      if (($li.data('pos').equals(pos)) && ($li.data('color') !== undefined)) {
-        self.valid = false;
-      } else if ($li.data('pos').equals(pos)) {
-        self.listItems.push($li);
-      }
-    });
-  });
+  this.game.score += 7
+  $('.score').html('<p>Score: ' + this.game.score + '</p>');
 };
 
 View.prototype.verticals = function () {

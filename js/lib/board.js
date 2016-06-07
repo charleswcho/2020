@@ -23,29 +23,90 @@ Board.validPos = function (pos) {
   );
 };
 
-Board.prototype.placeShape = function (shape) {
+Board.prototype.placeShape = function (startPos, shape) {
+  var self = this;
   var coords = shape.coords;
-  if (this.emptyCoords(coords)) {
-    coords.forEach(function (row, rowIdx) {
-      row.forEach(function (tile, tileIdx) {
-        tile = new Tile([rowIdx, tileIdx], shape.color);
-      });
+
+  var transformedCoords = coords.map(function (pos) {
+    return [startPos[0]+pos[0], startPos[1]+pos[1]];
+  });
+
+  if (this.emptyCoords(transformedCoords)) {
+    transformedCoords.forEach(function (coord) {
+      self.grid[coord[0]][coord[1]] = new Tile(coord, shape.color);
     });
   }
 };
 
 Board.prototype.emptyCoords = function (coords) {
   var self = this;
-  coords.forEach(function (row, rowIdx) {
-    row.forEach(function (tile, tileIdx) {
-      if (Board.validPos([rowIdx, tileIdx])) {
-        var tile = self.grid[rowIdx][tileIdx];
-        if (tile.empty) {
-          return false;
-        }
-      }
+  var isValid = coords.every(Board.validPos);
+  var isEmpty = false;
+  if (isValid) {
+    isEmpty = coords.every(function (coord, idx, arr) {
+      var tile = self.grid[coord[0]][coord[1]]
+      return tile.empty
+    });
+  }
+
+  return isValid && isEmpty;
+};
+
+Board.prototype.verticals = function () {
+  var self = this;
+  var grid = this.grid;
+  var cols = grid[0].map(function(col, i) {
+    return grid.map(function(row) {
+        return row[i];
     });
   });
+  cols.forEach(function (row) {
+    if (self.full(row)) {
+      self.clear(row);
+    }
+  });
+};
+
+Board.prototype.horizontals = function () {
+  var grid = this.grid;
+  var self = this;
+  var row = [];
+  $('.group > li').each(function (idx, li) {
+    var $li = $(li);
+    row.push($li[0]);
+    if (row.length === 10) {
+      if (self.full(row)) {
+        self.clear(row);
+      }
+      self.grid.push(row);
+      row = [];
+    }
+  });
+};
+
+Board.prototype.full = function (arr) {
+  var full = true;
+  arr.forEach(function (li) {
+    var $li = $(li);
+    if ($li.data('color') === undefined) {
+      full = false;
+    }
+  });
+  return full;
+};
+
+Board.prototype.clear = function (arr) {
+  this.game.score += 93
+  var self = this;
+  arr.forEach(function (li) {
+    var $li = $(li);
+    $li.animate({ 'background-color': '#ccc' }, 500, function() {
+      $li.removeAttr('style');
+      $li.removeData('color');
+      $li.removeClass('piece');
+		});
+  });
+
   return true;
 };
 
